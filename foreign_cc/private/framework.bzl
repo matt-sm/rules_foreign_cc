@@ -874,20 +874,15 @@ def _define_inputs(attrs):
             bazel_system_includes += headers_info.include_dirs
             bazel_libs += _collect_libs(dep[CcInfo].linking_context)
 
-    # CcSharedLibraryInfo was enabled in Bazel 7
-    # taken from https://github.com/aspect-build/bazel-lib/blob/main/lib/private/utils.bzl#L238
-    _is_bazel_7_or_greater = "apple_binary" not in dir(native) and "cc_host_toolchain_alias" not in dir(native)
-    if _is_bazel_7_or_greater:
-        for dynamic_dep in attrs.dynamic_deps:
+    for dynamic_dep in attrs.dynamic_deps:
+        linker_input = dynamic_dep[CcSharedLibraryInfo].linker_input
+        bazel_libs += _collect_shared_libs(linker_input)
+        linking_context = cc_common.create_linking_context(
+            linker_inputs = depset(direct = [linker_input]),
+        )
 
-                linker_input = dynamic_dep[CcSharedLibraryInfo].linker_input
-                bazel_libs += _collect_shared_libs(linker_input)
-                linking_context = cc_common.create_linking_context(
-                    linker_inputs = depset(direct = [linker_input]),
-                )
-
-                # create a new CcInfo from the CcSharedLibraryInfo linker_input
-                cc_infos.append(CcInfo(linking_context = linking_context))
+        # create a new CcInfo from the CcSharedLibraryInfo linker_input
+        cc_infos.append(CcInfo(linking_context = linking_context))
 
     # Keep the order of the transitive foreign dependencies
     # (the order is important for the correct linking),
