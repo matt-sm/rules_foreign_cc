@@ -50,6 +50,10 @@ def runnable_binary(name, binary, foreign_cc_target, match_binary_name = False, 
 
     wrapper_cmd = """
     sed s@EXECUTABLE@$(rlocationpath {name})@g $(location @rules_foreign_cc//foreign_cc/private:runnable_binary_wrapper.sh) > tmp
+    if [[ ! -s tmp ]]; then
+        echo "ERROR: runnable binary wrapper script is empty" >&2
+        exit 1
+    fi
     cp tmp $@
     """
 
