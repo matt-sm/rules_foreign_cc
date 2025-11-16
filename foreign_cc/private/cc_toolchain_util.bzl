@@ -23,6 +23,7 @@ CxxToolsInfo = provider(
         cxx_linker_static = "C++ linker to link static library",
         cxx_linker_executable = "C++ linker to link executable",
         ld = "linker",
+        strip = "strip",
     ),
 )
 
@@ -194,12 +195,25 @@ def get_tools_info(ctx):
 
     Args:
         ctx: rule context
+
+    Returns:
+        CxxToolsInfo
     """
     cc_toolchain = find_cpp_toolchain(ctx)
     feature_configuration = _configure_features(
         ctx = ctx,
         cc_toolchain = cc_toolchain,
     )
+
+    strip = ""
+    if cc_common.action_is_enabled(
+        feature_configuration = feature_configuration,
+        action_name = ACTION_NAMES.strip,
+    ):
+        strip = cc_common.get_tool_for_action(
+            feature_configuration = feature_configuration,
+            action_name = ACTION_NAMES.strip,
+        )
 
     return CxxToolsInfo(
         cc = cc_common.get_tool_for_action(
@@ -219,6 +233,7 @@ def get_tools_info(ctx):
             action_name = ACTION_NAMES.cpp_link_executable,
         ),
         ld = cc_toolchain.ld_executable,
+        strip = strip,
     )
 
 def get_flags_info(ctx, link_output_file = None):
